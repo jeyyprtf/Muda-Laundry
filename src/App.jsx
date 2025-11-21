@@ -49,31 +49,34 @@ const APP_DATA = {
 // --- GEMINI API CONFIG ---
 // [FIX] Menggunakan variabel manual agar tidak error "import.meta" di preview
 // Silakan paste API Key kamu di dalam tanda kutip di bawah ini
-const apiKey = import.meta.env.VITE_API_KEY; 
+// const apiKey = import.meta.env.VITE_API_KEY; 
 
 const callGemini = async (prompt, systemInstruction = "") => {
-  if (!apiKey) return "⚠️ API Key belum disetting. Cek kodingan App.jsx baris 55.";
-
   try {
     const finalPrompt = systemInstruction ? `${systemInstruction}\n\nUser: ${prompt}` : prompt;
     
-    // Menggunakan model gemini-2.5-flash-lite yang lebih ringan dan cepat
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
-      {
+    // [PERUBAHAN 1] Request ke Netlify Function (Proxy Server kita sendiri)
+    // Perhatikan URL-nya relatif: /.netlify/functions/gemini
+    const response = await fetch('/.netlify/functions/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: finalPrompt }] }]
-        })
-      }
-    );
+        // [PERUBAHAN 2] Body-nya lebih simpel, server yang bakal urus format Google
+        body: JSON.stringify({ prompt: finalPrompt }) 
+    });
     
+    if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+    }
+
     const data = await response.json();
+    
+    // Parsing responsenya tetep sama kayak struktur Google biasanya
     if (data.error) return `Error: ${data.error.message}`;
     return data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, AI sedang bingung.";
+
   } catch (error) {
-    return "Gagal koneksi ke AI. Pastikan internet lancar.";
+    console.error("Frontend Error:", error);
+    return "Gagal koneksi ke Asisten Toko (Server Error).";
   }
 };
 
