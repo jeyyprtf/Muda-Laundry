@@ -49,7 +49,7 @@ const APP_DATA = {
 // --- GEMINI API CONFIG ---
 // [FIX] Menggunakan variabel manual agar tidak error "import.meta" di preview
 // Silakan paste API Key kamu di dalam tanda kutip di bawah ini
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || ""; 
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY; 
 
 const callGemini = async (prompt, systemInstruction = "") => {
   if (!apiKey) return "⚠️ API Key belum disetting. Cek kodingan App.jsx baris 55.";
